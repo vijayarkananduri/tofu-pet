@@ -5,7 +5,6 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
 import android.content.Intent
-import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -16,31 +15,32 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.Vibrator
+import android.speech.tts.TextToSpeech
 import android.view.Gravity
 import android.view.MotionEvent
-import android.view.View
 import android.view.WindowManager
+import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.core.app.NotificationCompat
 import com.tofu.pet.R
+import java.util.Locale
+import kotlin.math.abs
 import kotlin.math.sqrt
 
 class PetOverlayService : Service(), SensorEventListener {
-
     private lateinit var windowManager: WindowManager
     private lateinit var webView: WebView
     private lateinit var sensorManager: SensorManager
     private lateinit var vibrator: Vibrator
     private lateinit var handler: Handler
-
+    private var textToSpeech: TextToSpeech? = null
     private var lastX = 0f
     private var lastY = 0f
-    private var petX = 0f
-    private var petY = 0f
+    private var petX = 100
+    private var petY = 100
     private var lastShakeTime = 0L
-    private var accumulatedRotation = 0f
-    private var lastGyroZ = 0f
+    private var accumulatedRotation = 0.0
 
     override fun onCreate() {
         super.onCreate()
@@ -48,229 +48,123 @@ class PetOverlayService : Service(), SensorEventListener {
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         vibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
         handler = Handler(Looper.getMainLooper())
-
+        textToSpeech = TextToSpeech(this) { if (it == TextToSpeech.SUCCESS) textToSpeech?.language = Locale.getDefault() }
         createNotificationChannel()
-        startForeground(1, createNotification())
+        startForeground(NOTIFICATION_ID, createNotification())
         setupWebView()
         registerSensors()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == ACTION_SHOW_REMINDER) {
+            val taskId = intent.getStringExtra("taskId") ?: ""
+            val title = intent.getStringExtra("title") ?: "You have a task"
+            handler.post { if (::webView.isInitialized) webView.evaluateJavascript("window.Pet.onReminder(${js(taskId)},${js(title)},1)", null) }
+        }
         return START_STICKY
     }
 
     private fun setupWebView() {
         webView = WebView(this).apply {
-            settings.apply {
-                javaScriptEnabled = true
-                domStorageEnabled = true
-                databaseEnabled = true
-            }
+            settings.javaScriptEnabled = true
+            settings.domStorageEnabled = true
+            settings.databaseEnabled = true
             webViewClient = WebViewClient()
-            setBackgroundColor(0x00000000) // Transparent
+            setBackgroundColor(0x00000000)
             addJavascriptInterface(AndroidBridge(), "AndroidBridge")
         }
-
-        // Load pet HTML from assets
         webView.loadUrl("file:///android_asset/tofu.html")
-
-        val params = WindowManager.LayoutParams().apply {
-            type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-            } else {
-                @Suppress("DEPRECATION")
-                WindowManager.LayoutParams.TYPE_PHONE
-            }
-            format = PixelFormat.TRANSLUCENT
-            flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
-            gravity = Gravity.TOP or Gravity.START
-            width = 200
-            height = 120
-            x = 100
-            y = 100
-        }
-
+        val params = WindowManager.LayoutParams(
+            200, 120, if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+            PixelFormat.TRANSLUCENT
+        ).apply { gravity = Gravity.TOP or Gravity.START; x = petX; y = petY }
         windowManager.addView(webView, params)
-
-        // Enable touch handling
-        webView.setOnTouchListener { _, event ->
-            handleTouchEvent(event)
-            true
-        }
+        webView.setOnTouchListener { _, event -> handleTouchEvent(event); true }
     }
 
     private fun handleTouchEvent(event: MotionEvent) {
-        when (event.action) {
-            MotionEvent.ACTION_DOWN -> {
-                lastX = event.rawX
-                lastY = event.rawY
-                vibrate(10)
-            }
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> { lastX = event.rawX; lastY = event.rawY; vibrate(10) }
             MotionEvent.ACTION_MOVE -> {
-                val dx = event.rawX - lastX
-                val dy = event.rawY - lastY
-
-                if (sqrt(dx * dx + dy * dy) > 10) {
-                    petX += dx
-                    petY += dy
-                    updatePetPosition(petX.toInt(), petY.toInt())
-                    lastX = event.rawX
-                    lastY = event.rawY
-                }
+                val dx = event.rawX - lastX; val dy = event.rawY - lastY
+                if (sqrt(dx * dx + dy * dy) > 10) { petX += dx.toInt(); petY += dy.toInt(); updatePetPosition(); lastX = event.rawX; lastY = event.rawY }
             }
             MotionEvent.ACTION_UP -> {
-                val dx = event.rawX - lastX
-                val dy = event.rawY - lastY
-                if (sqrt(dx * dx + dy * dy) < 10) {
-                    // Tap detected
-                    webView.evaluateJavascript("window.Pet.onTap()") { }
-                    vibrate(20)
+                if (sqrt((event.rawX - lastX) * (event.rawX - lastX) + (event.rawY - lastY) * (event.rawY - lastY)) < 20) {
+                    webView.evaluateJavascript("window.Pet.onTap()", null); vibrate(20)
                 }
             }
         }
     }
 
-    private fun updatePetPosition(x: Int, y: Int) {
+    private fun updatePetPosition() {
+        if (!::webView.isInitialized) return
         val params = webView.layoutParams as WindowManager.LayoutParams
-        params.x = x
-        params.y = y
+        params.x = petX; params.y = petY
         windowManager.updateViewLayout(webView, params)
     }
 
     private fun registerSensors() {
-        val accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-        val gyroscope = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
-
-        accelerometer?.let {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
-        }
-        gyroscope?.let {
-            sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI)
-        }
+        sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI) }
+        sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE)?.let { sensorManager.registerListener(this, it, SensorManager.SENSOR_DELAY_UI) }
     }
 
-    override fun onSensorChanged(event: SensorEvent?) {
-        event ?: return
-
+    override fun onSensorChanged(event: SensorEvent) {
         when (event.sensor.type) {
             Sensor.TYPE_ACCELEROMETER -> {
-                handleAccelerometerEvent(event.values)
+                val force = abs(sqrt(event.values[0] * event.values[0] + event.values[1] * event.values[1] + event.values[2] * event.values[2]) - 9.81f)
+                val level = (force / 2).toInt().coerceIn(1, 10)
+                if (force > 2 && System.currentTimeMillis() - lastShakeTime > 2000) {
+                    webView.evaluateJavascript("window.Pet.onShake($level)", null); vibrate(30); lastShakeTime = System.currentTimeMillis()
+                }
             }
             Sensor.TYPE_GYROSCOPE -> {
-                handleGyroscopeEvent(event.values)
+                accumulatedRotation += event.values[2].toDouble() * 0.02
+                if (abs(accumulatedRotation) > 4 * Math.PI) { webView.evaluateJavascript("window.Pet.onSpin()", null); accumulatedRotation = 0.0; vibrate(25) }
             }
         }
     }
 
-    private fun handleAccelerometerEvent(values: FloatArray) {
-        val x = values[0]
-        val y = values[1]
-        val z = values[2]
-
-        val force = sqrt(x * x + y * y + z * z) - 9.81f
-        val level = (force / 2).toInt().coerceIn(1, 10)
-
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastShakeTime > 2000) {
-            if (level in 1..5) {
-                webView.evaluateJavascript("window.Pet.onShake(${level})") { }
-                vibrate(30)
-            } else if (level in 6..10) {
-                webView.evaluateJavascript("window.Pet.onShake(${level})") { }
-                vibrate(50)
-            }
-            lastShakeTime = currentTime
-        }
-    }
-
-    private fun handleGyroscopeEvent(values: FloatArray) {
-        val gyroZ = values[2]
-        accumulatedRotation += gyroZ
-
-        if (kotlin.math.abs(accumulatedRotation) > 4 * Math.PI) {
-            webView.evaluateJavascript("window.Pet.onSpin()") { }
-            accumulatedRotation = 0f
-            vibrate(25)
-        }
-    }
-
-    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) {}
+    override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
 
     private fun vibrate(ms: Long) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            vibrator.vibrate(android.os.VibrationEffect.createOneShot(
-                ms,
-                android.os.VibrationEffect.DEFAULT_AMPLITUDE
-            ))
-        } else {
-            @Suppress("DEPRECATION")
-            vibrator.vibrate(ms)
-        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) vibrator.vibrate(android.os.VibrationEffect.createOneShot(ms, android.os.VibrationEffect.DEFAULT_AMPLITUDE)) else @Suppress("DEPRECATION") vibrator.vibrate(ms)
     }
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                "tofu_service",
-                "Tofu Pet Service",
-                NotificationManager.IMPORTANCE_LOW
-            )
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
+            getSystemService(NotificationManager::class.java).createNotificationChannel(NotificationChannel(CHANNEL_ID, "Tofu Pet", NotificationManager.IMPORTANCE_LOW))
         }
     }
 
-    private fun createNotification(): Notification {
-        return NotificationCompat.Builder(this, "tofu_service")
-            .setContentTitle("Tofu is running")
-            .setContentText("Your pet is floating on your screen")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .build()
-    }
+    private fun createNotification(): Notification = NotificationCompat.Builder(this, CHANNEL_ID)
+        .setContentTitle("Tofu is running").setContentText("Your pet is floating on your screen")
+        .setSmallIcon(R.drawable.ic_launcher_foreground).setOngoing(true).setPriority(NotificationCompat.PRIORITY_LOW).build()
 
     override fun onDestroy() {
-        super.onDestroy()
         sensorManager.unregisterListener(this)
-        if (::webView.isInitialized) {
-            windowManager.removeView(webView)
-        }
+        if (::webView.isInitialized) { windowManager.removeView(webView); webView.destroy() }
+        textToSpeech?.shutdown()
+        super.onDestroy()
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     inner class AndroidBridge {
-        @android.webkit.JavascriptInterface
-        fun vibrate(ms: Long) {
-            this@PetOverlayService.vibrate(ms)
-        }
+        @JavascriptInterface fun vibrate(ms: Long) = this@PetOverlayService.vibrate(ms)
+        @JavascriptInterface fun reportBounds(x: Int, y: Int, w: Int, h: Int) = Unit
+        @JavascriptInterface fun openApp() { packageManager.getLaunchIntentForPackage(packageName)?.let { it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); startActivity(it) } }
+        @JavascriptInterface fun requestTts(text: String) { handler.post { textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "tofu") } }
+        @JavascriptInterface fun checkTask(taskId: String) = Unit
+        @JavascriptInterface fun snoozeTask(taskId: String) = Unit
+    }
 
-        @android.webkit.JavascriptInterface
-        fun reportBounds(x: Int, y: Int, w: Int, h: Int) {
-            // Handle pet bounds for click detection
-        }
+    private fun js(value: String): String = "\"" + value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n") + "\""
 
-        @android.webkit.JavascriptInterface
-        fun openApp() {
-            val intent = packageManager.getLaunchIntentForPackage(packageName)
-            startActivity(intent)
-        }
-
-        @android.webkit.JavascriptInterface
-        fun requestTts(text: String) {
-            // TODO: Implement TTS
-        }
-
-        @android.webkit.JavascriptInterface
-        fun checkTask(taskId: String) {
-            // TODO: Implement task checking
-        }
-
-        @android.webkit.JavascriptInterface
-        fun snoozeTask(taskId: String) {
-            // TODO: Implement task snoozing
-        }
+    companion object {
+        const val ACTION_SHOW_REMINDER = "com.tofu.pet.SHOW_REMINDER"
+        private const val CHANNEL_ID = "tofu_service"
+        private const val NOTIFICATION_ID = 1
     }
 }
