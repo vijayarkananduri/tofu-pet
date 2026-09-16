@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.TofuPet" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <item name="colorPrimary">@color/cream</item>
+        <item name="colorPrimaryVariant">@color/cream_dark</item>
+        <item name="colorSecondary">@color/brown</item>
+        <item name="colorSecondaryVariant">@color/brown</item>
+        <item name="android:colorBackground">@color/white</item>
+        <item name="colorError">@color/error</item>
+    </style>
+</resources>
