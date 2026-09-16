@@ -8,23 +8,36 @@
 </head>
 <body>
     <main class="overlay-root">
-        <div class="speech-bubble" id="speechBubble"><span id="speechText"></span></div>
-        <section class="pet-stage" aria-label="Tofu pet">
-            <svg class="pet" viewBox="0 0 240 170" role="img" aria-label="Tofu">
-                <ellipse cx="120" cy="146" rx="78" ry="9" class="pet-shadow" />
-                <ellipse cx="120" cy="82" rx="100" ry="60" class="pet-body" />
-                <ellipse cx="78" cy="73" rx="17" ry="21" class="pet-eye" />
-                <ellipse cx="162" cy="73" rx="17" ry="21" class="pet-eye" />
-                <circle cx="82" cy="76" r="7" class="pet-pupil" />
-                <circle cx="166" cy="76" r="7" class="pet-pupil" />
-                <ellipse cx="57" cy="101" rx="16" ry="8" class="pet-blush" opacity="0" />
-                <ellipse cx="183" cy="101" rx="16" ry="8" class="pet-blush" opacity="0" />
-                <path d="M 92 106 Q 120 125 148 106" class="pet-mouth" />
-            </svg>
-        </section>
-        <section class="task-bubble" id="taskBubble" aria-live="polite">
-            <div class="task-header"><span class="task-icon">⏰</span><span class="task-title" id="taskTitle">You have a task</span></div>
-            <div class="task-actions"><button class="task-btn done-btn" id="doneBtn">✓ Done</button><button class="task-btn snooze-btn" id="snoozeBtn">⏰ 5 min</button><button class="task-btn more-btn" id="moreBtn">Open</button></div>
+        <section class="island" id="island" aria-label="Tofu floating pet">
+            <div class="island-glow"></div>
+            <div class="island-header">
+                <span class="live-dot"></span>
+                <span class="brand">TOFU</span>
+                <span class="status" id="statusText">here with you</span>
+                <span class="mic-indicator" id="micIndicator">·</span>
+            </div>
+            <div class="pet-stage" aria-label="Tofu pet">
+                <div class="sparkle sparkle-one">✦</div>
+                <div class="sparkle sparkle-two">✧</div>
+                <svg class="pet" viewBox="0 0 240 150" role="img" aria-label="Tofu">
+                    <ellipse cx="120" cy="132" rx="78" ry="7" class="pet-shadow" />
+                    <rect x="18" y="22" width="204" height="102" rx="51" class="pet-body" />
+                    <path d="M34 42 Q120 17 206 42" class="pet-highlight" />
+                    <ellipse cx="79" cy="70" rx="15" ry="18" class="pet-eye" />
+                    <ellipse cx="161" cy="70" rx="15" ry="18" class="pet-eye" />
+                    <circle cx="82" cy="73" r="6" class="pet-pupil" />
+                    <circle cx="164" cy="73" r="6" class="pet-pupil" />
+                    <ellipse cx="57" cy="96" rx="15" ry="7" class="pet-blush" opacity="0" />
+                    <ellipse cx="183" cy="96" rx="15" ry="7" class="pet-blush" opacity="0" />
+                    <path d="M95 98 Q120 115 145 98" class="pet-mouth" />
+                    <path d="M110 113 Q120 119 130 113" class="pet-mouth-muted" opacity="0" />
+                </svg>
+            </div>
+            <div class="speech-bubble" id="speechBubble"><span id="speechText"></span></div>
+            <section class="task-bubble" id="taskBubble" aria-live="polite">
+                <div class="task-header"><span class="task-icon">◷</span><span class="task-title" id="taskTitle">A little thing for you</span></div>
+                <div class="task-actions"><button class="task-btn done-btn" id="doneBtn">✓ Done</button><button class="task-btn snooze-btn" id="snoozeBtn">Later</button><button class="task-btn more-btn" id="moreBtn">Open</button></div>
+            </section>
         </section>
     </main>
     <script src="tofu.js"></script>
