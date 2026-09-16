@@ -220,7 +220,7 @@ class TofuPet {
         this.speechText.textContent = text;
         this.speechBubble.classList.add('show');
 
-        if (AndroidBridge) {
+        if (window.AndroidBridge) {
             AndroidBridge.requestTts(text);
         }
 
@@ -230,7 +230,7 @@ class TofuPet {
     }
 
     checkTask() {
-        if (AndroidBridge) {
+        if (window.AndroidBridge) {
             AndroidBridge.checkTask(this.currentTaskId);
         }
         this.setState(PetState.IDLE, 2000);
@@ -242,7 +242,7 @@ class TofuPet {
     }
 
     snoozeTask() {
-        if (AndroidBridge) {
+        if (window.AndroidBridge) {
             AndroidBridge.snoozeTask(this.currentTaskId);
         }
         this.speak('I\'ll remind you soon.');
@@ -250,7 +250,7 @@ class TofuPet {
     }
 
     openApp() {
-        if (AndroidBridge) {
+        if (window.AndroidBridge) {
             AndroidBridge.openApp();
         }
     }

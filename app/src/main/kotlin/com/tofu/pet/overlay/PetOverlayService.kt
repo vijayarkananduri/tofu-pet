@@ -37,8 +37,8 @@ class PetOverlayService : Service(), SensorEventListener {
     private var textToSpeech: TextToSpeech? = null
     private var lastX = 0f
     private var lastY = 0f
-    private var petX = 100
-    private var petY = 100
+    private var petX = 20
+    private var petY = 72
     private var lastShakeTime = 0L
     private var accumulatedRotation = 0.0
 
@@ -75,7 +75,7 @@ class PetOverlayService : Service(), SensorEventListener {
         }
         webView.loadUrl("file:///android_asset/tofu.html")
         val params = WindowManager.LayoutParams(
-            200, 120, if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE,
+            320, 300, if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY else @Suppress("DEPRECATION") WindowManager.LayoutParams.TYPE_PHONE,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
             PixelFormat.TRANSLUCENT
         ).apply { gravity = Gravity.TOP or Gravity.START; x = petX; y = petY }
@@ -101,6 +101,9 @@ class PetOverlayService : Service(), SensorEventListener {
     private fun updatePetPosition() {
         if (!::webView.isInitialized) return
         val params = webView.layoutParams as WindowManager.LayoutParams
+        val metrics = resources.displayMetrics
+        petX = petX.coerceIn(0, (metrics.widthPixels - params.width).coerceAtLeast(0))
+        petY = petY.coerceIn(0, (metrics.heightPixels - params.height).coerceAtLeast(0))
         params.x = petX; params.y = petY
         windowManager.updateViewLayout(webView, params)
     }
