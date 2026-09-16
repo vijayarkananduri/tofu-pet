@@ -34,9 +34,9 @@ class SettingsActivity : ComponentActivity() {
         Box(Modifier.fillMaxSize().background(Color(0xFFF5E6C8))) {
             Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text("Settings", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color(0xFF5C3A1E))
-                SettingItem("Tilt Sensitivity") { Slider(tiltSensitivity, { tiltSensitivity = it }, Modifier.fillMaxWidth()) }
-                SettingItem("Shake Sensitivity") { Slider(shakeSensitivity, { shakeSensitivity = it }, Modifier.fillMaxWidth()) }
-                SettingItem("Pet Size") { Slider(petSize, { petSize = it }, 0.5f..2f, Modifier.fillMaxWidth()) }
+                SettingItem("Tilt Sensitivity") { Slider(value = tiltSensitivity, onValueChange = { tiltSensitivity = it }, modifier = Modifier.fillMaxWidth()) }
+                SettingItem("Shake Sensitivity") { Slider(value = shakeSensitivity, onValueChange = { shakeSensitivity = it }, modifier = Modifier.fillMaxWidth()) }
+                SettingItem("Pet Size") { Slider(value = petSize, onValueChange = { petSize = it }, valueRange = 0.5f..2f, modifier = Modifier.fillMaxWidth()) }
                 SettingItem("Your Name") {
                     TextField(userName, { userName = it }, placeholder = { Text("Optional") }, modifier = Modifier.fillMaxWidth())
                 }

@@ -140,7 +140,7 @@ class PetOverlayService : Service(), SensorEventListener {
 
     private fun createNotification(): Notification = NotificationCompat.Builder(this, CHANNEL_ID)
         .setContentTitle("Tofu is running").setContentText("Your pet is floating on your screen")
-        .setSmallIcon(R.drawable.ic_launcher_foreground).setOngoing(true).setPriority(NotificationCompat.PRIORITY_LOW).build()
+        .setSmallIcon(R.mipmap.ic_launcher_foreground).setOngoing(true).setPriority(NotificationCompat.PRIORITY_LOW).build()
 
     override fun onDestroy() {
         sensorManager.unregisterListener(this)
