@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tofu Pet</title>
+    <link rel="stylesheet" href="tofu.css">
+</head>
+<body>
+    <div class="container">
+        <svg class="pet" width="180" height="100" viewBox="0 0 180 100">
+            <!-- Pill body -->
+            <ellipse cx="90" cy="50" rx="80" ry="45" class="pet-body" />
+            
+            <!-- Shadow -->
+            <ellipse cx="90" cy="85" rx="70" ry="8" class="pet-shadow" />
+            
+            <!-- Left eye -->
+            <circle cx="60" cy="40" r="8" class="pet-eye" />
+            <circle cx="62" cy="38" r="3" class="pet-pupil" />
+            
+            <!-- Right eye -->
+            <circle cx="120" cy="40" r="8" class="pet-eye" />
+            <circle cx="122" cy="38" r="3" class="pet-pupil" />
+            
+            <!-- Mouth -->
+            <path d="M 70 60 Q 90 70 110 60" class="pet-mouth" />
+            
+            <!-- Blush left -->
+            <ellipse cx="45" cy="55" rx="8" ry="5" class="pet-blush" opacity="0" />
+            
+            <!-- Blush right -->
+            <ellipse cx="135" cy="55" rx="8" ry="5" class="pet-blush" opacity="0" />
+        </svg>
+    </div>
+
+    <!-- Task bubble (hidden by default) -->
+    <div class="task-bubble" id="taskBubble">
+        <div class="task-header">
+            <span class="task-icon">⏰</span>
+            <span class="task-title" id="taskTitle">Take medicine</span>
+        </div>
+        <div class="task-actions">
+            <button class="task-btn done-btn" id="doneBtn">✓ Done</button>
+            <button class="task-btn snooze-btn" id="snoozeBtn">⏰ 5min</button>
+            <button class="task-btn more-btn" id="moreBtn">⋯</button>
+        </div>
+    </div>
+
+    <!-- Speech bubble (hidden by default) -->
+    <div class="speech-bubble" id="speechBubble">
+        <span id="speechText"></span>
+    </div>
+
+    <script src="tofu.js"></script>
+</body>
+</html>
