@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tofu Color Palette -->
+    <color name="cream">#F5E6C8</color>
+    <color name="cream_dark">#E8D4A8</color>
+    <color name="brown">#5C3A1E</color>
+    <color name="blush_pink">#F4A0B0</color>
+    <color name="happy_glow">#FFE9A8</color>
+    <color name="angry_glow">#FF5A5A</color>
+    <color name="grumpy_glow">#8B2A2A</color>
+    <color name="listening_glow">#A8D8FF</color>
+    <color name="dizzy_swirl">#B58CFF</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="error">#B00020</color>
+</resources>

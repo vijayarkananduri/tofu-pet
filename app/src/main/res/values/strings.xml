@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tofu Pet</string>
+    <string name="permission_overlay_title">Display over other apps</string>
+    <string name="permission_overlay_description">Tofu needs permission to float over your screen</string>
+    <string name="permission_mic_title">Microphone access</string>
+    <string name="permission_mic_description">Tofu listens to your voice commands</string>
+    <string name="permission_notification_title">Notifications</string>
+    <string name="permission_notification_description">Tofu sends reminder notifications</string>
+    <string name="onboarding_title">Meet Tofu</string>
+    <string name="onboarding_subtitle">A soft little friend who remembers</string>
+</resources>
