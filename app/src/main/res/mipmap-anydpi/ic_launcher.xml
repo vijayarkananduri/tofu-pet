@@ -1,0 +1,10 @@
+# This is a placeholder for the app logo
+# In a real project, replace this with actual PNG files in multiple densities:
+# - res/mipmap-hdpi/ic_launcher.png (72x72)
+# - res/mipmap-mdpi/ic_launcher.png (48x48)
+# - res/mipmap-xhdpi/ic_launcher.png (96x96)
+# - res/mipmap-xxhdpi/ic_launcher.png (144x144)
+# - res/mipmap-xxxhdpi/ic_launcher.png (192x192)
+# - res/mipmap-anydpi/ic_launcher.xml (vector drawable)
+
+# For now, use a simple vector drawable
